@@ -2,9 +2,9 @@ package counter.agent.asm;
 
 import counter.agent.ClassDesc;
 import counter.agent.trace.TraceMain;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import jdk.nashorn.internal.runtime.regexp.joni.constants.OPCode;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -49,7 +49,7 @@ public class SpringRequestMappingASM implements ASM {
                     continue;
                 }
 
-                System.out.println("Found target class : " + className);
+                System.out.println("## Found target class : " + className);
                 return new SpringRequestMappingCV(cv, className);
             }
         }
@@ -64,7 +64,7 @@ public class SpringRequestMappingASM implements ASM {
 class SpringRequestMappingCV extends ClassVisitor implements Opcodes {
 
     private String className;
-    private String classesMethodUrl = "";
+    private String urlPattern;
 
     public SpringRequestMappingCV(ClassVisitor cv, String className) {
         super(ASM5, cv);
@@ -76,7 +76,7 @@ class SpringRequestMappingCV extends ClassVisitor implements Opcodes {
         AnnotationVisitor av = super.visitAnnotation(desc, visible);
 
         if (av != null && SpringRequestMappingASM.containsRequestMapping(desc)) {
-            System.out.println("Found RequestMapping in CV : " + className);
+            System.out.println("## Found RequestMapping in CV : " + className);
             return new SpringRequestMappingCVAV(av);
         }
 
@@ -86,7 +86,7 @@ class SpringRequestMappingCV extends ClassVisitor implements Opcodes {
     @Override
     public MethodVisitor visitMethod(int access, String methodName, String desc, String signature,
         String[] exceptions) {
-        System.out.println("## Check visitMethod.. in CV : " +  methodName);
+        System.out.println("## Check visitMethod.. in CV : " + methodName);
 
         MethodVisitor mv = super.visitMethod(access, methodName, desc, signature, exceptions);
         if (mv == null) {
@@ -97,8 +97,10 @@ class SpringRequestMappingCV extends ClassVisitor implements Opcodes {
             return mv;
         }
 
-        System.out.println("Found target method : " + methodName + desc);
-        return new SpringRequestMappingMV(mv, classesMethodUrl);
+        System.out.println("## Found target method : " + methodName + desc
+            + ", class method url : " + urlPattern);
+
+        return new SpringRequestMappingMV(mv, urlPattern);
     }
 
     class SpringRequestMappingCVAV extends AnnotationVisitor implements Opcodes {
@@ -116,7 +118,7 @@ class SpringRequestMappingCV extends ClassVisitor implements Opcodes {
             }
 
             if (name.equals("value") || name.equals("path")) {
-                System.out.println("SpringRequestMappingCVAV::visitArray() name : " + name);
+                System.out.println("## SpringRequestMappingCVAV::visitArray() name : " + name);
                 return new SpringRequestMappingCVAVAV(av);
             }
 
@@ -133,10 +135,13 @@ class SpringRequestMappingCV extends ClassVisitor implements Opcodes {
         @Override
         public void visit(String name, Object value) {
             super.visit(name, value);
-            String stringValue = value.toString();
+            System.out.print("## SpringRequestMappingCVAVAV::visit() name : " + name + ", value : " + value);
 
-            if (stringValue != null && stringValue.length() > 0) {
-                classesMethodUrl = stringValue;
+            if (value != null) {
+                String toStringValue = value.toString();
+                if (toStringValue != null) {
+                    urlPattern = toStringValue;
+                }
             }
         }
     }
@@ -149,19 +154,20 @@ class SpringRequestMappingMV extends MethodVisitor implements Opcodes {
     private static final String METHOD_NAME = "counterApiCallsByControllerMethods";
     private static final String METHOD_SIGNATURE = "(Ljava/lang/String;)V";
 
-    public SpringRequestMappingMV(MethodVisitor mv, String classesMethodUrl) {
+    public SpringRequestMappingMV(MethodVisitor mv, String urlPattern) {
         super(ASM5, mv);
-        this.urlPattern = classesMethodUrl;
+        if (urlPattern == null) {
+            urlPattern = "";
+        }
+        this.urlPattern = urlPattern;
     }
 
     @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         AnnotationVisitor av = super.visitAnnotation(desc, visible);
 
-        System.out.println("## SpringRequestMappingMV::visitAnnotation() desc : " + desc);
-
         if (SpringRequestMappingASM.containsRequestMapping(desc)) {
-            System.out.println("Found requestMapping annotations in MV. desc : " + desc);
+            System.out.println("## Found requestMapping annotations in MV. desc : " + desc);
             return new SpringRequestMappingMVAV(av);
         }
 
@@ -170,23 +176,17 @@ class SpringRequestMappingMV extends MethodVisitor implements Opcodes {
 
     @Override
     public void visitCode() {
-        // added code == TraceMain.counterApiCallsByControllerMethods(urlPattern);
+        System.out.println("## SpringRequestMappingMV::visitCode() is called..");
         mv.visitLdcInsn(urlPattern);
         mv.visitMethodInsn(Opcodes.INVOKESTATIC, TRACE_MAIN, METHOD_NAME, METHOD_SIGNATURE, false);
         mv.visitCode();
     }
 
-    class SpringRequestMappingMVAV extends AnnotationVisitor implements OPCode {
+    class SpringRequestMappingMVAV extends AnnotationVisitor implements Opcodes {
 
         public SpringRequestMappingMVAV(AnnotationVisitor av) {
             super(ASM5, av);
-        }
-
-        @Override
-        public void visit(String name, Object value) {
-            super.visit(name, value);
-
-            System.out.println("## SpringRequestMappingMVAV::visit(). name : " + name + ", value : " + value);
+            System.out.println("## SpringRequestMappingMVAV() is called..");
         }
 
         @Override
@@ -197,7 +197,7 @@ class SpringRequestMappingMV extends MethodVisitor implements Opcodes {
                 return av;
             }
 
-            System.out.println("SpringRequestMappingMVAV::visitArray() name : " + name);
+            System.out.println("## SpringRequestMappingMVAV::visitArray() name : " + name);
 
             if (name.equals("value") || name.equals("path")) {
                 return new SpringRequestMappingMVAVAV(av);
@@ -219,9 +219,9 @@ class SpringRequestMappingMV extends MethodVisitor implements Opcodes {
 
             if (value instanceof String) {
                 urlPattern += (String) value;
-                System.out.println(">> Url pattern : " + urlPattern);
+                System.out.println("## >> Url pattern : " + urlPattern);
             } else {
-                System.out.println(">> Cannot cast to String.. " + value.getClass().getName());
+                System.out.println("## >> Cannot cast to String.. " + value.getClass().getName());
             }
         }
     }

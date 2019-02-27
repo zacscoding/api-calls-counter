@@ -1,11 +1,13 @@
 ## Counter api calls  
 
-Collect api calls in ur application and save to ElasticSearch  
-
+Collect api calls in java application and save to elasticsearch  
 
 ## TODO  
 
-- [ ] building java agent project & trace HttpServlet  
-- [ ] trace spring`s controllers
+- [x] building java agent project
+- [ ] trace http servlet
+- [x] trace spring`s controllers
+  - @Controller / @RequestController
+  - @RequestMaping / @GetMapping ...
 - [ ] collect api calls & report to elasticsearch
 - [ ] trace jersey resources

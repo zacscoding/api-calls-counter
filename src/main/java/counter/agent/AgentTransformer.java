@@ -4,6 +4,7 @@ import counter.agent.asm.ASM;
 import counter.agent.asm.AgentClassWriter;
 import counter.agent.asm.SpringRequestMappingASM;
 import counter.util.ASMUtil;
+import counter.util.WriteClassFileUtil;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
@@ -78,12 +79,14 @@ public class AgentTransformer implements ClassFileTransformer {
                     cr.accept(cv, ClassReader.EXPAND_FRAMES);
                     classfileBuffer = cw.toByteArray();
                     cv = cw = new AgentClassWriter(ClassWriter.COMPUTE_FRAMES);
+
+                    WriteClassFileUtil.writeByteCode(classfileBuffer, className);
                 }
             }
 
             return classfileBuffer;
         } catch (Throwable r) {
-
+            r.printStackTrace(System.err);
         } finally {
             hookingContext.set(null);
         }

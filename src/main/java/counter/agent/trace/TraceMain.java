@@ -2,6 +2,7 @@ package counter.agent.trace;
 
 import counter.agent.proxy.HttpTrace;
 import counter.agent.proxy.HttpTraceFactory;
+import java.util.Arrays;
 
 /**
  * @GitHub : https://github.com/zacscoding
@@ -38,7 +39,9 @@ public class TraceMain {
     public static void counterApiCallsByControllerMethods(String urlPattern) {
         try {
             TraceContext context = TraceContextManager.disposeContext();
-            System.out.println("TraceMain::counterApiCallsByControllerMethods() context : " + context);
+            System.out.println("## TraceMain::counterApiCallsByControllerMethods() context : " + context
+                + ", urlPattern : " + urlPattern);
+
             if (context == null) {
                 return;
             }
