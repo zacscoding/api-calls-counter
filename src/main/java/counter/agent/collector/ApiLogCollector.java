@@ -52,7 +52,9 @@ public class ApiLogCollector {
 
         @Override
         public void run() {
-            disposable = flux.bufferTimeout(10, Duration.ofSeconds(3), Schedulers.elastic())
+            int maxSize = Integer.parseInt(System.getProperty("counter.buffer.size", "100"));
+            int seconds = Integer.parseInt(System.getProperty("counter.buffer.seconds", "10"));
+            disposable = flux.bufferTimeout(maxSize, Duration.ofSeconds(seconds), Schedulers.elastic())
                 .filter(values -> values != null && !values.isEmpty())
                 .subscribe(values -> apiLogSender.sendLogs(values));
         }

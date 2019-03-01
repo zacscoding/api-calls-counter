@@ -4,6 +4,7 @@ import counter.agent.ClassDesc;
 import counter.agent.trace.TraceMain;
 import java.util.HashSet;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.LocalVariablesSorter;
@@ -78,19 +79,41 @@ class HttpServiceMV extends LocalVariablesSorter implements Opcodes {
     private static final String TRACE_MAIN = TraceMain.class.getName().replace('.', '/');
     private static final String START_METHOD = "countApiCallsByServlet";
     private static final String START_SIGNATURE = "(Ljava/lang/Object;)V";
+    private static final String END_METHOD = "disposeContext";
+    private static final String END_SIGNATURE = "()V";
 
+    private Label startFinally = new Label();
     private boolean isServlet;
-    private int httpContextIdx;
 
     protected HttpServiceMV(int access, String desc, MethodVisitor mv, boolean isServlet) {
         super(ASM5, access, desc, mv);
         this.isServlet = isServlet;
     }
 
-
     @Override
     public void visitCode() {
         mv.visitVarInsn(Opcodes.ALOAD, 1);
         mv.visitMethodInsn(Opcodes.INVOKESTATIC, TRACE_MAIN, START_METHOD, START_SIGNATURE, false);
+        mv.visitLabel(startFinally);
+        mv.visitCode();
+    }
+
+    @Override
+    public void visitInsn(int opcode) {
+        if ((opcode >= IRETURN && opcode <= RETURN)) {
+            mv.visitMethodInsn(Opcodes.INVOKESTATIC, TRACE_MAIN, END_METHOD, END_SIGNATURE, false);
+        }
+        mv.visitInsn(opcode);
+    }
+
+    @Override
+    public void visitMaxs(int maxStack, int maxLocals) {
+        Label labelCatch = new Label();
+        mv.visitTryCatchBlock(startFinally, labelCatch, labelCatch, null);
+        mv.visitLabel(labelCatch);
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, TRACE_MAIN, END_METHOD, END_SIGNATURE, false);
+        // throw
+        mv.visitInsn(ATHROW);
+        mv.visitMaxs(maxStack + 1, maxLocals + 2);
     }
 }

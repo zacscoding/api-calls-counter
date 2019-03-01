@@ -7,6 +7,7 @@
     <groupId>me.zaccoding</groupId>
     <artifactId>api-call-counter</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
 
     <properties>
         <java.version>1.8</java.version>
@@ -50,18 +51,16 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/io.projectreactor/reactor-core -->
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
             <version>3.2.6.RELEASE</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.elasticsearch.client/elasticsearch-rest-high-level-client -->
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>6.4.0</version>
+            <artifactId>elasticsearch-rest-client</artifactId>
+            <version>6.3.2</version>
         </dependency>
 
         <dependency>
@@ -116,8 +115,8 @@
                         <configuration>
                             <relocations>
                                 <relocation>
-                                    <pattern>org.objectweb</pattern>
-                                    <shadedPattern>counter.agent.deps.org.objectweb</shadedPattern>
+                                    <pattern>org.objectweb.asm</pattern>
+                                    <shadedPattern>counter.agent.deps.org.objectweb.asm</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>org.apache</pattern>
@@ -131,10 +130,10 @@
                                     <pattern>reactor</pattern>
                                     <shadedPattern>counter.agent.deps.reactor</shadedPattern>
                                 </relocation>
-                                <!--<relocation>
+                                <relocation>
                                     <pattern>org.elasticsearch</pattern>
                                     <shadedPattern>counter.agent.deps.org.elasticsearch</shadedPattern>
-                                </relocation>-->
+                                </relocation>
                                 <relocation>
                                     <pattern>com</pattern>
                                     <shadedPattern>counter.agent.deps.com</shadedPattern>

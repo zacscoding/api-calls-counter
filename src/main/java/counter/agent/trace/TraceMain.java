@@ -1,5 +1,6 @@
 package counter.agent.trace;
 
+import com.google.gson.Gson;
 import counter.agent.collector.ApiLogCollector;
 import counter.agent.proxy.HttpTrace;
 import counter.agent.proxy.HttpTraceFactory;
@@ -17,10 +18,8 @@ public class TraceMain {
      */
     public static void countApiCallsByServlet(Object request) {
         try {
-            System.out.println("countAPiCallsByServlet..");
             // start trace only first calls
             if (TraceContextManager.getContext() != null) {
-                System.out.println("TraceContextManager is not null..");
                 return;
             }
 
@@ -28,18 +27,14 @@ public class TraceMain {
                 initHttp(request);
             }
 
-            System.out.println("After init http.. :: " + HTTP_TRACE);
-
             if (!HTTP_TRACE.isTrace(request)) {
-                System.out.println("HTTP_TRACE.isTrace(request) is returned false");
                 return;
             }
 
-            System.out.println("Start trace context..");
             TraceContext ctx = TraceContextManager.getOrCreateContext();
             HTTP_TRACE.start(ctx, request);
         } catch (Throwable t) {
-            t.printStackTrace();
+            t.printStackTrace(System.err);
             // ignore
         }
     }
@@ -50,8 +45,6 @@ public class TraceMain {
     public static void countApiCallsByControllerMethods(String urlPattern) {
         try {
             TraceContext context = TraceContextManager.disposeContext();
-            System.out.println("## TraceMain::counterApiCallsByControllerMethods() context : " + context
-                + ", urlPattern : " + urlPattern);
 
             if (context == null) {
                 return;
@@ -62,6 +55,10 @@ public class TraceMain {
         } catch (Exception e) {
             // ignore
         }
+    }
+
+    public static void disposeContext() {
+        TraceContextManager.disposeContext();
     }
 
     private static void initHttp(Object request) {

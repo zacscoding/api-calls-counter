@@ -19,7 +19,6 @@ public class Agent {
         }
 
         try {
-            System.out.println("Premain is called..");
             Agent.instrumentation = inst;
             Agent.instrumentation.addTransformer(new AgentTransformer());
         } catch (Throwable t) {

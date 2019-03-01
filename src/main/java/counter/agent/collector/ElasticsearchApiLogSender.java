@@ -2,19 +2,24 @@ package counter.agent.collector;
 
 import com.google.gson.Gson;
 import counter.agent.trace.TraceContext;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
-import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.index.IndexRequest;
+import org.apache.http.entity.ContentType;
+import org.apache.http.nio.entity.NStringEntity;
+import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.xcontent.XContentType;
 
 /**
+ * Send trace context to elasticsearch
+ *
  * @GitHub : https://github.com/zacscoding
  */
 public class ElasticsearchApiLogSender implements ApiLogSender {
@@ -22,7 +27,8 @@ public class ElasticsearchApiLogSender implements ApiLogSender {
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private Gson gson;
-    private RestHighLevelClient restHighLevelClient;
+    private RestClient restClient;
+    private boolean error;
 
     public ElasticsearchApiLogSender() {
         initialize();
@@ -30,26 +36,23 @@ public class ElasticsearchApiLogSender implements ApiLogSender {
 
     @Override
     public void sendLogs(List<TraceContext> contexts) {
+        if (error) {
+            return;
+        }
+
+        String indexName = "api-log-" + LocalDate.now().format(FORMATTER);
+        StringBuilder requestBodyBuilder = new StringBuilder(contexts.size() * 20);
+
+        for (TraceContext traceContext : contexts) {
+            IndexRequest indexRequest = new IndexRequest(indexName, gson.toJson(traceContext));
+            requestBodyBuilder.append(indexRequest.toJsonBulkRequest());
+        }
+
         try {
-            String indexName = "controller-log-" + LocalDate.now().format(FORMATTER);
-            BulkRequest request = new BulkRequest();
-            for (TraceContext context : contexts) {
-                request.add(
-                    new IndexRequest(indexName, "doc").source(gson.toJson(context), XContentType.JSON)
-                );
-            }
-
-            restHighLevelClient.bulkAsync(request, new ActionListener<BulkResponse>() {
-                @Override
-                public void onResponse(BulkResponse response) {
-                }
-
-                @Override
-                public void onFailure(Exception e) {
-                }
-            });
-
-
+            System.out.println(requestBodyBuilder);
+            Map<String, String> params = Collections.emptyMap();
+            HttpEntity entity = new NStringEntity(requestBodyBuilder.toString(), ContentType.APPLICATION_JSON);
+            Response response = restClient.performRequest("POST", "_bulk", params, entity);
         } catch (Exception e) {
             e.printStackTrace(System.err);
         }
@@ -57,8 +60,41 @@ public class ElasticsearchApiLogSender implements ApiLogSender {
 
     private void initialize() {
         this.gson = new Gson();
-        this.restHighLevelClient = new RestHighLevelClient(
-            RestClient.builder(new HttpHost("127.0.0.1", 9200, "http"))
-        );
+        String elasticsearchHost = System.getProperty("counter.elasticsearch.host");
+        if (elasticsearchHost == null || elasticsearchHost.length() < 1) {
+            error = true;
+        }
+
+        try {
+            StringTokenizer tokenizer = new StringTokenizer(elasticsearchHost, ",");
+
+            int tokenSize = tokenizer.countTokens();
+            HttpHost[] httpHosts = new HttpHost[tokenSize];
+
+            for (int i = 0; tokenizer.hasMoreTokens(); i++) {
+                URL url = new URL(tokenizer.nextToken());
+                httpHosts[i] = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
+            }
+
+            this.restClient = RestClient.builder(httpHosts).build();
+        } catch (MalformedURLException e) {
+            error = true;
+        }
+    }
+
+    public static class IndexRequest {
+
+        private String indexName;
+        private String document;
+
+        public IndexRequest(String indexName, String document) {
+            this.indexName = indexName;
+            this.document = document;
+        }
+
+        public String toJsonBulkRequest() {
+            return "{ \"index\" : { \"_index\" : \"" + indexName + "\", \"_type\" : \"_doc\"} } \n"
+                + document + "\n";
+        }
     }
 }

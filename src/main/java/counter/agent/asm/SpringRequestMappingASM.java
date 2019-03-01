@@ -48,7 +48,6 @@ public class SpringRequestMappingASM implements ASM {
                     continue;
                 }
 
-                System.out.println("## Found target class : " + className);
                 return new SpringRequestMappingCV(cv, className);
             }
         }
@@ -75,7 +74,6 @@ class SpringRequestMappingCV extends ClassVisitor implements Opcodes {
         AnnotationVisitor av = super.visitAnnotation(desc, visible);
 
         if (av != null && SpringRequestMappingASM.containsRequestMapping(desc)) {
-            System.out.println("## Found RequestMapping in CV : " + className);
             return new SpringRequestMappingCVAV(av);
         }
 
@@ -85,7 +83,6 @@ class SpringRequestMappingCV extends ClassVisitor implements Opcodes {
     @Override
     public MethodVisitor visitMethod(int access, String methodName, String desc, String signature,
         String[] exceptions) {
-        System.out.println("## Check visitMethod.. in CV : " + methodName);
 
         MethodVisitor mv = super.visitMethod(access, methodName, desc, signature, exceptions);
         if (mv == null) {
@@ -95,9 +92,6 @@ class SpringRequestMappingCV extends ClassVisitor implements Opcodes {
         if (methodName.startsWith("<")) {
             return mv;
         }
-
-        System.out.println("## Found target method : " + methodName + desc
-            + ", class method url : " + urlPattern);
 
         return new SpringRequestMappingMV(mv, urlPattern);
     }
@@ -117,7 +111,6 @@ class SpringRequestMappingCV extends ClassVisitor implements Opcodes {
             }
 
             if (name.equals("value") || name.equals("path")) {
-                System.out.println("## SpringRequestMappingCVAV::visitArray() name : " + name);
                 return new SpringRequestMappingCVAVAV(av);
             }
 
@@ -134,8 +127,6 @@ class SpringRequestMappingCV extends ClassVisitor implements Opcodes {
         @Override
         public void visit(String name, Object value) {
             super.visit(name, value);
-            System.out.print("## SpringRequestMappingCVAVAV::visit() name : " + name + ", value : " + value);
-
             if (value != null) {
                 String toStringValue = value.toString();
                 if (toStringValue != null) {
@@ -166,7 +157,6 @@ class SpringRequestMappingMV extends MethodVisitor implements Opcodes {
         AnnotationVisitor av = super.visitAnnotation(desc, visible);
 
         if (SpringRequestMappingASM.containsRequestMapping(desc)) {
-            System.out.println("## Found requestMapping annotations in MV. desc : " + desc);
             return new SpringRequestMappingMVAV(av);
         }
 
@@ -175,7 +165,6 @@ class SpringRequestMappingMV extends MethodVisitor implements Opcodes {
 
     @Override
     public void visitCode() {
-        System.out.println("## SpringRequestMappingMV::visitCode() is called..");
         mv.visitLdcInsn(urlPattern);
         mv.visitMethodInsn(Opcodes.INVOKESTATIC, TRACE_MAIN, METHOD_NAME, METHOD_SIGNATURE, false);
         mv.visitCode();
@@ -185,7 +174,6 @@ class SpringRequestMappingMV extends MethodVisitor implements Opcodes {
 
         public SpringRequestMappingMVAV(AnnotationVisitor av) {
             super(ASM5, av);
-            System.out.println("## SpringRequestMappingMVAV() is called..");
         }
 
         @Override
@@ -195,8 +183,6 @@ class SpringRequestMappingMV extends MethodVisitor implements Opcodes {
             if (av == null || name == null) {
                 return av;
             }
-
-            System.out.println("## SpringRequestMappingMVAV::visitArray() name : " + name);
 
             if (name.equals("value") || name.equals("path")) {
                 return new SpringRequestMappingMVAVAV(av);
@@ -218,9 +204,6 @@ class SpringRequestMappingMV extends MethodVisitor implements Opcodes {
 
             if (value instanceof String) {
                 urlPattern += (String) value;
-                System.out.println("## >> Url pattern : " + urlPattern);
-            } else {
-                System.out.println("## >> Cannot cast to String.. " + value.getClass().getName());
             }
         }
     }
