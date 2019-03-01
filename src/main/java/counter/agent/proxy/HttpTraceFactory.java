@@ -7,8 +7,8 @@ package counter.agent.proxy;
  */
 public class HttpTraceFactory {
 
-    private static final String HTTP_TRACE = "tracker.xtra.http.HttpTrace";
-    private static final String HTTP_TRACE3 = "tracker.xtra.http.HttpTrace3";
+    private static final String HTTP_TRACE = "counter.xtra.http.ServletHttpTrace";
+    private static final String HTTP_TRACE3 = "counter.xtra.http.ServletHttpTrace";
 
     /**
      * Create HttpTrace instance

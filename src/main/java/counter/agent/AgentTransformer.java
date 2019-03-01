@@ -2,6 +2,7 @@ package counter.agent;
 
 import counter.agent.asm.ASM;
 import counter.agent.asm.AgentClassWriter;
+import counter.agent.asm.HttpServiceASM;
 import counter.agent.asm.SpringRequestMappingASM;
 import counter.util.ASMUtil;
 import counter.util.WriteClassFileUtil;
@@ -30,6 +31,7 @@ public class AgentTransformer implements ClassFileTransformer {
 
     public static void reload() {
         List<ASM> temps = new ArrayList<ASM>();
+        temps.add(new HttpServiceASM());
         temps.add(new SpringRequestMappingASM());
         asms = temps;
     }

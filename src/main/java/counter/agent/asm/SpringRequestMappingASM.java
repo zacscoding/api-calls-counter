@@ -2,7 +2,6 @@ package counter.agent.asm;
 
 import counter.agent.ClassDesc;
 import counter.agent.trace.TraceMain;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import org.objectweb.asm.AnnotationVisitor;
@@ -151,7 +150,7 @@ class SpringRequestMappingMV extends MethodVisitor implements Opcodes {
 
     private String urlPattern;
     private static final String TRACE_MAIN = TraceMain.class.getName().replace('.', '/');
-    private static final String METHOD_NAME = "counterApiCallsByControllerMethods";
+    private static final String METHOD_NAME = "countApiCallsByControllerMethods";
     private static final String METHOD_SIGNATURE = "(Ljava/lang/String;)V";
 
     public SpringRequestMappingMV(MethodVisitor mv, String urlPattern) {

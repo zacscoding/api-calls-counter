@@ -5,16 +5,25 @@ package counter.agent.trace;
  */
 public class TraceContext {
 
-    private String httpMethod;
+    private String method;
+    private String requestURI;
     private String urlPattern;
     private long requestAt;
 
-    public String getHttpMethod() {
-        return httpMethod;
+    public String getMethod() {
+        return method;
     }
 
-    public void setHttpMethod(String httpMethod) {
-        this.httpMethod = httpMethod;
+    public void setMethod(String method) {
+        this.method = method;
+    }
+
+    public String getRequestURI() {
+        return requestURI;
+    }
+
+    public void setRequestURI(String requestURI) {
+        this.requestURI = requestURI;
     }
 
     public String getUrlPattern() {
@@ -31,5 +40,15 @@ public class TraceContext {
 
     public void setRequestAt(long requestAt) {
         this.requestAt = requestAt;
+    }
+
+    @Override
+    public String toString() {
+        return "TraceContext{" +
+            "method='" + method + '\'' +
+            ", requestURI='" + requestURI + '\'' +
+            ", urlPattern='" + urlPattern + '\'' +
+            ", requestAt=" + requestAt +
+            '}';
     }
 }
