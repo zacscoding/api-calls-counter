@@ -1,16 +1,16 @@
-## Find you not used API calls  
+## 🔨 Find your not used API calls :)    
 
-Collect api calls in java application and save to elasticsearch
-And then see from Kibana :)  
+Collect api calls in java application and save to elasticsearch.
+And then you can see some graphs from Kibana :)  
 
----
+---  
 
 > Getting started  
 
 - ## Build  
 
 ```
-$ git clone 
+$ git clone https://github.com/zacscoding/api-calls-counter.git
 $ mvn clean package
 ```  
 
